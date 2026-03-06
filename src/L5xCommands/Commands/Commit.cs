@@ -45,13 +45,15 @@ public static class Commit
         var logger = new StdOutEventLogger();
         var config = UserPrompts.InitializeConfigPromptIfNeeded(acdPath, logger);
 
+        // Prompt for commit message before starting the long export process
+        var commitMessage = UserPrompts.GetCommitMessagePromptIfNeeded(config);
+
         await PathGuard.Guard(
             path: config.DestinationPath,
             millisecondsTimeout: 0,
             timeoutExceptionText: $"Unable to acquire lock on \"{config.DestinationPath}\". Another instance of this process may be running.",
             action: async () =>
             {
-                var commitMessage = UserPrompts.GetCommitMessagePromptIfNeeded(config);
                 await CommitFromAcd(acdPath, config, commitMessage, logger);
             });
     }

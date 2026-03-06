@@ -21,6 +21,8 @@ internal class Program
             Explode.Command,
             Implode.Command,
             L5x2Acd.Command,
+            PullRequest.Command,
+            Pull.Command,
         }.ForEach(subCommand => {
             subCommand.Options.Add(pauseOption);
             rootCommand.Subcommands.Add(subCommand);

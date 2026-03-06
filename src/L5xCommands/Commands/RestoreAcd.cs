@@ -4,6 +4,7 @@ using L5xploderLib.Services;
 using RockwellAutomation.LogixDesigner;
 using RockwellAutomation.LogixDesigner.Logging;
 using System.CommandLine;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace L5xCommands.Commands;
@@ -71,6 +72,24 @@ public static class RestoreAcd
 
         await ConvertL5xToAcd(tempL5xFile.Path, tempAcdFile.Path);
 
+        // Close Logix Designer if it has this ACD open, then move the file
+        var acdBaseName = Path.GetFileNameWithoutExtension(acdPath);
+        var logixProcess = FindLogixDesignerProcess(acdBaseName);
+        bool wasOpen = logixProcess is not null;
+
+        if (logixProcess is not null)
+        {
+            logger?.Status(acdPath, $"Closing Logix Designer (PID {logixProcess.Id})...");
+            logixProcess.CloseMainWindow();
+            if (!logixProcess.WaitForExit(30_000))
+            {
+                logger?.Status(acdPath, "Logix Designer did not close gracefully, forcing...");
+                logixProcess.Kill();
+                logixProcess.WaitForExit(10_000);
+            }
+            logger?.Status(acdPath, "Logix Designer closed.");
+        }
+
         // Backup the file, same as logix designer would
         if (File.Exists(acdPath))
         {
@@ -78,8 +97,20 @@ public static class RestoreAcd
             File.Copy(acdPath, backupFileName);
         }
 
-        // Now move the temp file to the original ACD path
+        // Move the restored ACD into place
         File.Move(tempAcdFile.Path, acdPath, true);
+        logger?.Status(acdPath, "ACD file restored successfully.");
+
+        // Reopen in Logix Designer using shell association (.ACD → Logix Designer)
+        if (wasOpen)
+        {
+            logger?.Status(acdPath, "Reopening project in Logix Designer...");
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = acdPath,
+                UseShellExecute = true,
+            });
+        }
     }
 
     static async Task ConvertL5xToAcd(string l5xFilePath, string acdFilePath)
@@ -94,6 +125,34 @@ public static class RestoreAcd
         {
             throw new OperationFailedException("Unable to save project: An unknown error has occured", acdFilePath);
         }
+    }
+
+    static Process? FindLogixDesignerProcess(string acdBaseName)
+    {
+        try
+        {
+            foreach (var proc in Process.GetProcessesByName("LogixDesigner"))
+            {
+                try
+                {
+                    // Window title format: "Logix Designer - CDW5_MCM09 [1756-L83ES 36.11]*"
+                    if (proc.MainWindowTitle.Contains(acdBaseName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return proc;
+                    }
+                }
+                catch
+                {
+                    // Access denied to some process info — skip
+                }
+            }
+        }
+        catch
+        {
+            // GetProcessesByName can fail — not critical
+        }
+
+        return null;
     }
 
     static string GetAcdBackupFilePath(string acdFilePath)

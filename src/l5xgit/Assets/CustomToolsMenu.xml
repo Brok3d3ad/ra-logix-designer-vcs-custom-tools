@@ -31,4 +31,20 @@
 		<StatusBarText>Launch l5xgit.exe</StatusBarText>
 		<ToolbarIcon IconIndex="0">@@OUTDIR@@\Assets\pull.bmp</ToolbarIcon>
 	</CustomTool>
+	<CustomTool>
+		<Command>@@OUTDIR@@\l5xgit.exe</Command>
+		<WorkingDirectory></WorkingDirectory>
+		<Arguments>pullrequest --acd "%project_path%" --pause</Arguments>
+		<ToolName>PullRequest</ToolName>
+		<StatusBarText>Create a pull request on GitHub</StatusBarText>
+		<ToolbarIcon IconIndex="0">@@OUTDIR@@\Assets\pull.bmp</ToolbarIcon>
+	</CustomTool>
+	<CustomTool>
+		<Command>@@OUTDIR@@\l5xgit.exe</Command>
+		<WorkingDirectory></WorkingDirectory>
+		<Arguments>pull --acd "%project_path%" --pause</Arguments>
+		<ToolName>Pull</ToolName>
+		<StatusBarText>Pull from remote and recompile ACD files</StatusBarText>
+		<ToolbarIcon IconIndex="0">@@OUTDIR@@\Assets\pull.bmp</ToolbarIcon>
+	</CustomTool>
 </CustomToolsContent>

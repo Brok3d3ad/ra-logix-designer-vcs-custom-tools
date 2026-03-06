@@ -3,10 +3,13 @@ namespace L5xGitLib;
 public sealed class TempFile : IDisposable
 {
     public required string Path { get; init; }
+    private bool keep = false;
 
     private TempFile()
     {
     }
+
+    public void KeepFile() => keep = true;
 
     public static TempFile FromSuggestedFileName(string fileName)
     {
@@ -57,7 +60,7 @@ public sealed class TempFile : IDisposable
 
     public void Dispose()
     {
-        if (Path is not null && File.Exists(Path))
+        if (!keep && Path is not null && File.Exists(Path))
         {
             File.Delete(Path);
         }

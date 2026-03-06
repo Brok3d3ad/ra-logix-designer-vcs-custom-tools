@@ -76,7 +76,14 @@ public sealed class GitService : IDisposable
         var author = new Signature(name, email, DateTimeOffset.Now);
         var committer = author;
 
-        return repo.Commit(commitMessage, author, committer);
+        try
+        {
+            return repo.Commit(commitMessage, author, committer);
+        }
+        catch (EmptyCommitException)
+        {
+            return null;
+        }
     }
 
     public async Task<Commit?> CommitAsync(string commitMessage)
